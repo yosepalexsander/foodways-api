@@ -1,25 +1,25 @@
 require('dotenv').config(); // this is important!
 
 module.exports = {
-"development": {
+  "development": {
     "username": process.env.DB_USERNAME,
     "password": process.env.DB_PASSWORD,
-    "database": "database_development",
+    "database": "waysfood_dev",
     "host": "127.0.0.1",
     "dialect": "mysql"
-},
-"test": {
+  },
+  "test": {
     "username": "root",
     "password": null,
     "database": "database_test",
     "host": "127.0.0.1",
     "dialect": "mysql"
-},
-"production": {
+  },
+  "production": {
     "username": process.env.DB_USERNAME,
     "password": process.env.DB_PASSWORD,
     "database": "database_production",
     "host": "127.0.0.1",
     "dialect": "mysql"
-}
+  }
 };
