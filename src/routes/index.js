@@ -12,7 +12,7 @@ const {
 
 router.get('/users', getUsers);
 router.get('/user/:id', getUserDetail);
-router.post('/user', createUser);
+router.post('/register', createUser);
 router.put('/user/:id', updateUser);
 router.delete('/user/:id', deleteUser);
 
