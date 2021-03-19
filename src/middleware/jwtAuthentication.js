@@ -19,8 +19,7 @@ exports.authentication = (req, res, next) => {
 
   try {
     const payload = verifyToken(token)
-    req.userId = payload.id;
-    console.log(payload)
+    req.user = payload;
     next()
   } catch (error) {
     if (error.name === "TokenExpiredError") {

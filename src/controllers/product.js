@@ -116,7 +116,11 @@ exports.getProductDetail = async (req, res) => {
  */
 exports.createProduct = async (req, res) => {
 
-  const { body, userId } = req;
+  const { body, user: { id: userId, role } } = req;
+  if (role === "user") return res.status(403).send({
+    status: "error",
+    message: "access denied"
+  })
   try {
     const { id } = await Product.create({
       ...body,
