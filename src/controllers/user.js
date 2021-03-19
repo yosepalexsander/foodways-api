@@ -1,11 +1,13 @@
+"use strict";
+
 const { User } = require("../../models/");
 const Joi = require("joi");
 const hashing = require("../utils/hashing");
-const jwtUtils = require("../utils/jwt");
+const { generateAccessToken } = require("../utils/jwt");
 /**
- * Get Users
- * @param {Request} req Request 
- * @param {Response} res Reponse
+ * get users
+ * @param {Request} req Http Request 
+ * @param {Response} res Http Reponse
  */
 exports.getUsers = async (req, res) => {
   try {
@@ -16,7 +18,6 @@ exports.getUsers = async (req, res) => {
     });
     res.status(200).send({
       status: "success",
-      message: "users successfully get",
       data: {
         users
       }
@@ -30,9 +31,9 @@ exports.getUsers = async (req, res) => {
 };
 
 /**
- * Get User Detail
- * @param {Request} req Request
- * @param {Response} res Response
+ * get user detail
+ * @param {Request} req Http Request
+ * @param {Response} res Http Response
  */
 exports.getUserDetail = async (req, res) => {
   const { id } = req.params;
@@ -47,7 +48,6 @@ exports.getUserDetail = async (req, res) => {
     });
     res.status(200).send({
       status: "success",
-      message: "user detail successfully get",
       data: {
         user
       }
@@ -61,10 +61,10 @@ exports.getUserDetail = async (req, res) => {
 };
 
 /**
- *  Create New User
- * @param {Request} req Request
- * @param {Response} res Response
- * @returns Response
+ *  create new user
+ * @param {Request} req Http Request
+ * @param {Response} res Http Response
+ * @returns Http Response
  */
 exports.createUser = async (req, res) => {
   const { body } = req;
@@ -96,13 +96,13 @@ exports.createUser = async (req, res) => {
       password: hashedPass
     }
     const user = await User.create(data);
-    const accessToken = jwtUtils.generateAccessToken({
+    const accessToken = generateAccessToken({
+      id: user.id,
       name: user.fullName,
       role: user.role
     })
     res.status(200).send({
       status: "success",
-      message: "user successfully created",
       data: {
         user: {
           fullName: user.fullName,
@@ -120,10 +120,10 @@ exports.createUser = async (req, res) => {
 };
 
 /**
- *  Update User Data
- * @param {Request} req Request
- * @param {Response} res Response
- * @returns Response
+ *  update user data
+ * @param {Request} req Http Request
+ * @param {Response} res Http Response
+ * @returns Http Response
  */
 exports.updateUser = async (req, res) => {
   const { id } = req.params;
@@ -170,7 +170,6 @@ exports.updateUser = async (req, res) => {
 
     res.status(200).send({
       status: "success",
-      message: "user successfully updated",
       data: {
         updatedUser
       }
@@ -183,10 +182,56 @@ exports.updateUser = async (req, res) => {
   }
 };
 
+
 /**
- *  Delete User
- * @param {Request} req Request 
- * @param {Response} res Response
+ *  verify user login 
+ * @param {Request} req Http Request 
+ * @param {Response} res Http Response
+ * @returns Http Response
+ */
+exports.verifyUser = async (req, res) => {
+  const { body } = req;
+
+  try {
+    const user = await User.findOne({
+      where: {
+        email: body.email,
+        password: body.password
+      }
+    })
+
+    if (!user) return res.status(404).send({
+      status: "error",
+      message: "user is not found"
+    })
+
+    const accessToken = generateAccessToken({
+      id: user.id,
+      name: user.fullName,
+      role: user.role
+    })
+
+    res.status(200).send({
+      status: "success",
+      data: {
+        user: {
+          fullName: user.fullName,
+          email: user.email,
+          token: accessToken
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).send({
+      status: "error",
+      message: "internal server error"
+    });
+  }
+};
+/**
+ *  delete user
+ * @param {Request} req Http Request 
+ * @param {Response} res Http Response
  */
 exports.deleteUser = async (req, res) => {
   const { id } = req.params;
@@ -199,7 +244,6 @@ exports.deleteUser = async (req, res) => {
 
     res.status(200).send({
       status: "success",
-      message: "user successfully deleted",
       data: {
         id: id
       }

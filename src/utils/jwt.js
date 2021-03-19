@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
  * @returns {string} access token
  */
 exports.generateAccessToken = (user) => {
-  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: 300 })
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
 };
 
 
@@ -26,5 +26,5 @@ exports.generateRefreshToken = (user) => {
  * @returns {strin|object} user 
  */
 exports.verifyToken = (token) => {
-  return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET)
+  return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
 }
