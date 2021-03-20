@@ -9,11 +9,20 @@ const Joi = require("joi");
  */
 exports.getUsers = async (req, res) => {
   try {
-    const users = await User.findAll({
+    let users = await User.findAll({
       attributes: {
         exclude: ["createdAt", "updatedAt", "password"]
       }
     });
+
+    users = JSON.parse(JSON.stringify(users));
+
+    users = users.map(user => {
+      return {
+        ...user,
+        image: `${process.env.DOMAIN}/uploads/${user.image}`
+      }
+    })
     res.status(200).send({
       status: "success",
       data: {
@@ -102,17 +111,19 @@ exports.updateUser = async (req, res) => {
       })
     };
 
-    const updatedUser = await User.update(req.body, {
+    const updatedUser = await User.update({
+      ...req.body,
+      image: req.files.image[0].filename
+    }, {
       where: {
         id
-      },
-      fields: Object.keys(req.body)
+      }
     });
 
     res.status(200).send({
       status: "success",
       data: {
-        id
+        id: 1
       }
     });
   } catch (error) {
@@ -140,7 +151,7 @@ exports.deleteUser = async (req, res) => {
     res.status(200).send({
       status: "success",
       data: {
-        id: id
+        id: 1
       }
     });
   } catch (error) {

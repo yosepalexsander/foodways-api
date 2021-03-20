@@ -19,6 +19,26 @@ module.exports = (sequelize, DataTypes) => {
           name: "userId"
         }
       })
+
+      User.hasMany(models.Transaction, {
+        as: {
+          singular: "transaction",
+          plural: "transactions"
+        },
+        foreignKey: {
+          name: "customerId"
+        }
+      })
+      User.hasMany(models.Transaction, {
+        as: {
+          singular: "transaction",
+          plural: "transactions"
+        },
+        foreignKey: {
+          name: "restaurantId"
+        }
+      })
+
     }
   };
   User.init({
