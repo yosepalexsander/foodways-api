@@ -315,7 +315,7 @@ exports.getCustomerTransactions = async (req, res) => {
         }
       ],
       attributes: {
-        exclude: ["createdAt", "updatedAt", "customerId"]
+        exclude: ["updatedAt", "customerId"]
       },
     });
 
