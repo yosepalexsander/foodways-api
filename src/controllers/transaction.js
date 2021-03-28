@@ -34,7 +34,7 @@ exports.getTransactions = async (req, res) => {
         }
       ],
       attributes: {
-        exclude: ["createdAt", "updatedAt", "customerId"]
+        exclude: ["updatedAt", "customerId"]
       }
     });
 
@@ -87,7 +87,7 @@ exports.getDetailTransaction = async (req, res) => {
         }
       ],
       attributes: {
-        exclude: ["createdAt", "updatedAt", "customerId", "restaurantId"]
+        exclude: ["updatedAt", "customerId", "restaurantId"]
       }
     });
     res.status(200).send({
