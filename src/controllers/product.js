@@ -208,50 +208,62 @@ exports.updateProduct = async (req, res) => {
       },
       raw: true
     });
-    if (!product) {
-      res.status(404).send({
+
+    if (!product)
+      return res.status(404).send({
         status: "error",
         message: "resource doesn't exist"
       });
-    } else if (product['user.id'] !== userId) {
-      res.status(401).send({
+    if (product['user.id'] !== userId) {
+      return res.status(401).send({
         status: "error",
         message: "you have not permission to edit this resource"
       });
+    }
+    if (req.files) {
+      //remove file from upload folder
+      if (product.image) {
+        fs.unlink(path.join(process.cwd(), `uploads/${product.image}`), (err) => {
+          if (err) throw err;
+          console.log('file deleted')
+        })
+      }
+      const success = await Product.update({
+        ...body,
+        image: req.files.image[0].filename
+      },
+        { where: { id } }
+      )
     } else {
       const success = await Product.update(body,
-        {
-          where: {
-            id
-          }
-        }
+        { where: { id } }
       )
-
-      let product = await Product.findOne({
-        where: {
-          id
-        },
-        include: [{
-          model: User,
-          as: "user",
-          attributes: {
-            exclude: ["password", "image", "role", "createdAt", "updatedAt"]
-          }
-        }],
-        attributes: {
-          exclude: ["createdAt", "updatedAt", "userId"]
-        },
-      })
-      product = JSON.parse(JSON.stringify(product))
-      res.status(200).send({
-        status: "success",
-        message: "resource has successfully updated",
-        data: {
-          ...product,
-          image: `${process.env.DOMAIN}/uploads/${product.image}`
-        }
-      })
     }
+
+    let updatedProduct = await Product.findOne({
+      where: {
+        id
+      },
+      include: [{
+        model: User,
+        as: "user",
+        attributes: {
+          exclude: ["password", "image", "role", "createdAt", "updatedAt"]
+        }
+      }],
+      attributes: {
+        exclude: ["createdAt", "updatedAt", "userId"]
+      },
+    })
+    updatedProduct = JSON.parse(JSON.stringify(updatedProduct))
+    res.status(200).send({
+      status: "success",
+      message: "resource has successfully updated",
+      data: {
+        ...updatedProduct,
+        image: `${process.env.DOMAIN}/uploads/${updatedProduct.image}`
+      }
+    })
 
   } catch (error) {
     res.status(500).send({

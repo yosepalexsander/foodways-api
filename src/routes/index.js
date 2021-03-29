@@ -41,7 +41,7 @@ router.get('/products', getProducts);
 router.get('/products/:userId', getProductsByUserId);
 router.get('/product/:id', getProductDetail);
 router.post('/product', authentication, fileUploads("image"), createProduct);
-router.put('/product/:id', authentication, updateProduct);
+router.put('/product/:id', authentication, fileUploads("image"), updateProduct);
 router.delete('/product/:id', authentication, deleteProduct);
 
 router.get('/transactions/:id', authentication, getTransactions);
