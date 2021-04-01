@@ -1,8 +1,7 @@
 "use strict";
 
-const fs = require("fs");
-const path = require("path");
 const { User } = require("../../models");
+const cloudinary = require("../utils/cloudinary");
 
 /**
  * Get users
@@ -23,7 +22,7 @@ exports.getUsers = async (req, res) => {
     users = users.map(user => {
       return {
         ...user,
-        image: `${process.env.DOMAIN}/uploads/${user.image}`
+        image: cloudinary.url(user.image)
       }
     })
     res.status(200).send({
@@ -65,7 +64,7 @@ exports.getUserDetail = async (req, res) => {
       data: {
         user: {
           ...user,
-          image: `${process.env.DOMAIN}/uploads/${user.image}`
+          image: cloudinary.url(user.image)
         }
       }
     })
@@ -109,29 +108,25 @@ exports.updateUser = async (req, res) => {
     if (req.files) {
       //remove file from upload folder
       if (user.image) {
-        fs.unlink(path.join(process.cwd(), `uploads/${user.image}`), (err) => {
-          if (err) throw err;
-          console.log('file deleted')
-        })
-      }
-
+        await cloudinary.uploader.destroy(user.image)
+      };
+      const result = await cloudinary.uploader.upload(req.files.image[0].path, {
+        use_filename: true,
+        unique_filename: false
+      });
       const updatedUser = await User.update(
         {
           ...req.body,
-          image: req.files.image[0].filename
+          image: result.public_id
         },
         {
-          where: {
-            id
-          }
+          where: { id }
         }
       );
     } else {
       const updatedUser = await User.update(req.body,
         {
-          where: {
-            id
-          }
+          where: { id }
         }
       );
     }
@@ -165,14 +160,6 @@ exports.deleteUser = async (req, res) => {
         id
       }
     });
-
-    // if (image) {
-    //   //remove file from upload folder
-    //   fs.unlink(path.join(process.cwd(), `uploads/${image}`), (err) => {
-    //     if (err) throw err;
-    //     console.log('file deleted')
-    //   })
-    // }
 
     await User.destroy({
       where: {

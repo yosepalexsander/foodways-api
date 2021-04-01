@@ -2,6 +2,7 @@
 
 const sequelize = require("sequelize");
 const { User } = require("../../models");
+const cloudinary = require("../utils/cloudinary");
 
 /**
  * Get popular restaurant by count transaction
@@ -36,7 +37,7 @@ exports.getPopularPartner = async (req, res) => {
     users = users.map(user => {
       return {
         ...user,
-        image: `${process.env.DOMAIN}/uploads/${user.image}`
+        image: cloudinary.url(user.image)
       }
     })
     res.status(200).send({

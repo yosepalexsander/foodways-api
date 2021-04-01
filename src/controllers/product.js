@@ -1,8 +1,7 @@
 "use strict";
 
-const fs = require("fs");
-const path = require("path");
-const { Product, User } = require("../../models")
+const { Product, User } = require("../../models");
+const cloudinary = require("../utils/cloudinary");
 
 /**
  *  Get all products
@@ -11,9 +10,8 @@ const { Product, User } = require("../../models")
  * @returns {Promise<void>}
  */
 exports.getProducts = async (req, res) => {
-
   try {
-    const products = await Product.findAll({
+    let products = await Product.findAll({
       include: [{
         model: User,
         as: "user",
@@ -25,6 +23,14 @@ exports.getProducts = async (req, res) => {
         exclude: ["createdAt", "updatedAt", "userId"]
       }
     })
+
+    products = products.map(product => {
+      return {
+        ...product,
+        image: cloudinary.url(product.image)
+      }
+    });
+
     res.status(200).send({
       status: "success",
       message: "resources has successfully get",
@@ -62,7 +68,7 @@ exports.getProductsByUserId = async (req, res) => {
 
     products = products.map(product => ({
       ...product,
-      image: `${process.env.DOMAIN}/uploads/${product.image}`
+      image: cloudinary.url(product.image)
     }))
     res.status(200).send({
       status: "success",
@@ -90,9 +96,7 @@ exports.getProductDetail = async (req, res) => {
   const { id } = req.params;
   try {
     let product = await Product.findOne({
-      where: {
-        id
-      },
+      where: { id },
       include: [{
         model: User,
         as: "user",
@@ -112,7 +116,7 @@ exports.getProductDetail = async (req, res) => {
       data: {
         product: {
           ...product,
-          image: `${process.env.DOMAIN}/uploads/${product.image}`
+          image: cloudinary.url(product.image)
         }
       }
     })
@@ -137,18 +141,25 @@ exports.createProduct = async (req, res) => {
     status: "error",
     message: "access denied"
   })
+  if (!req.files) return res.status(400).send({
+    status: "error",
+    message: "image field must not be empty"
+  });
 
   try {
+    const result = await cloudinary.uploader.upload(req.files.image[0].path, {
+      use_filename: true,
+      unique_filename: false
+    });
+
     const { id } = await Product.create({
       ...body,
       userId,
-      image: req.files.image[0].filename
+      image: result.public_id
     })
 
     let product = await Product.findOne({
-      where: {
-        id
-      },
+      where: { id },
       include: [{
         model: User,
         as: "user",
@@ -166,7 +177,7 @@ exports.createProduct = async (req, res) => {
       message: "resource has successfully created",
       data: {
         ...product,
-        image: `${process.env.DOMAIN}/uploads/${product.image}`
+        image: result.secure_url
       }
     })
   } catch (error) {
@@ -193,9 +204,7 @@ exports.updateProduct = async (req, res) => {
 
   try {
     const product = await Product.findOne({
-      where: {
-        id
-      },
+      where: { id },
       include: [{
         model: User,
         as: "user",
@@ -209,28 +218,31 @@ exports.updateProduct = async (req, res) => {
       raw: true
     });
 
-    if (!product)
+    if (!product) {
       return res.status(404).send({
         status: "error",
         message: "resource doesn't exist"
       });
+    }
+
     if (product['user.id'] !== userId) {
       return res.status(401).send({
         status: "error",
         message: "you have not permission to edit this resource"
       });
     }
+
     if (req.files) {
-      //remove file from upload folder
       if (product.image) {
-        fs.unlink(path.join(process.cwd(), `uploads/${product.image}`), (err) => {
-          if (err) throw err;
-          console.log('file deleted')
-        })
+        await cloudinary.uploader.destroy(product.image);
       }
+      const result = await cloudinary.uploader.upload(req.files.image[0].path, {
+        use_filename: true,
+        unique_filename: false
+      });
       const success = await Product.update({
         ...body,
-        image: req.files.image[0].filename
+        image: result.public_id
       },
         { where: { id } }
       )
@@ -241,9 +253,7 @@ exports.updateProduct = async (req, res) => {
     }
 
     let updatedProduct = await Product.findOne({
-      where: {
-        id
-      },
+      where: { id },
       include: [{
         model: User,
         as: "user",
@@ -261,7 +271,7 @@ exports.updateProduct = async (req, res) => {
       message: "resource has successfully updated",
       data: {
         ...updatedProduct,
-        image: `${process.env.DOMAIN}/uploads/${updatedProduct.image}`
+        image: cloudinary.url(updatedProduct.image)
       }
     })
 
@@ -288,21 +298,14 @@ exports.deleteProduct = async (req, res) => {
   })
   try {
     const { image } = await Product.findOne({
-      where: {
-        id
-      }
+      where: { id }
     });
 
     //remove file from upload folder
-    fs.unlink(path.join(process.cwd(), `uploads/${image}`), (err) => {
-      if (err) throw err;
-      console.log('file deleted')
-    })
+    await cloudinary.uploader.destroy(image);
 
     await Product.destroy({
-      where: {
-        id
-      }
+      where: { id }
     })
 
     res.status(200).send({
