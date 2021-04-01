@@ -19,7 +19,7 @@ module.exports = {
           key: "id"
         },
         onUpdate: "CASCADE",
-        onDelete: "NO ACTION",
+        onDelete: "CASCADE",
       },
       restaurantId: {
         allowNull: false,
@@ -29,7 +29,7 @@ module.exports = {
           key: "id"
         },
         onUpdate: "CASCADE",
-        onDelete: "NO ACTION",
+        onDelete: "CASCADE",
       },
       createdAt: {
         allowNull: false,

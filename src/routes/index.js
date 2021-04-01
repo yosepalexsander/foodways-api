@@ -29,13 +29,17 @@ const {
   updateTransaction,
   getCustomerTransactions } = require("../controllers/transaction");
 
+const { getPopularPa, getPopularPartnerrtner } = require("../controllers/partner");
+
 router.post('/register', register);
 router.post('/login', login);
 router.get('/check-auth', authentication, checkAuth);
 router.get('/users', getUsers);
 router.get('/user/:id', getUserDetail);
-router.put('/user/:id', fileUploads("image"), updateUser);
+router.put('/user/:id', authentication, fileUploads("image"), updateUser);
 router.delete('/user/:id', authentication, deleteUser);
+
+router.get('/popular-restaurant', getPopularPartner);
 
 router.get('/products', getProducts);
 router.get('/products/:userId', getProductsByUserId);

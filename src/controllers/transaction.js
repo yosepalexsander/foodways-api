@@ -21,6 +21,8 @@ exports.getTransactions = async (req, res) => {
       where: {
         restaurantId: id
       },
+      limit: 10,
+      order: [['createdAt', 'DESC']],
       include: [
         {
           model: User,
@@ -47,7 +49,6 @@ exports.getTransactions = async (req, res) => {
     })
 
   } catch (error) {
-    console.log(error)
     res.status(500).send({
       status: "error",
       message: "Internal Server Error"
@@ -63,14 +64,10 @@ exports.getTransactions = async (req, res) => {
  */
 
 exports.getDetailTransaction = async (req, res) => {
-  const { params: { id }, user: { role } } = req;
-  if (role === "user") return res.status(403).send({
-    status: "error",
-    message: "access denied"
-  });
+  const { params: { id } } = req;
 
   try {
-    const transaction = await Transaction.findOne({
+    let transaction = await Transaction.findOne({
       where: {
         id
       },
@@ -78,7 +75,12 @@ exports.getDetailTransaction = async (req, res) => {
         {
           model: User,
           as: "userOrder",
-          attributes: ["id", "fullName", "location", "email"]
+          attributes: ["id", "fullName", "location"]
+        },
+        {
+          model: User,
+          as: "restaurant",
+          attributes: ["id", "fullName", "location"]
         },
         {
           model: Order,
@@ -90,11 +92,21 @@ exports.getDetailTransaction = async (req, res) => {
         exclude: ["updatedAt", "customerId", "restaurantId"]
       }
     });
+    transaction = JSON.parse(JSON.stringify(transaction));
+    const orders = transaction.orders.map(product => {
+      return {
+        ...product,
+        image: `${process.env.DOMAIN}/uploads/${product.image}`
+      }
+    })
     res.status(200).send({
       status: "success",
       message: "resource has successfully get",
       data: {
-        transaction
+        transaction: {
+          ...transaction,
+          orders: orders
+        }
       }
     })
   } catch (error) {
@@ -113,7 +125,7 @@ exports.getDetailTransaction = async (req, res) => {
  */
 
 exports.createTransaction = async (req, res) => {
-  const { body: { restaurant_id, products }, user } = req;
+  const { body: { restaurant_id, products, deliveryLocation }, user } = req;
   const ids = products.map(product => product.id);
   const quantities = products.map(product => product.qty);
   try {
@@ -121,6 +133,7 @@ exports.createTransaction = async (req, res) => {
     const { id: transactionId } = await Transaction.create({
       status: "waiting approve",
       restaurantId: restaurant_id,
+      deliveryLocation: deliveryLocation,
       customerId: user.id
     })
 
@@ -195,20 +208,29 @@ exports.updateTransaction = async (req, res) => {
   const {
     body,
     params: { id },
-    user: { role }
+    user
   } = req;
-  if (role === "user") return res.status(403).send({
-    status: "error",
-    message: "access denied"
-  });
 
   try {
+    const transaction = await Transaction.findOne({
+      where: { id }
+    });
+    if (!transaction) {
+      return res.status(404).send({
+        status: "error",
+        message: "resource not found"
+      })
+    };
+
+    if (transaction.restaurantId !== user.id) {
+      return res.status(403).send({
+        status: "error",
+        message: "you don't have permission for this resource"
+      })
+    };
+
     const success = await Transaction.update(body,
-      {
-        where: {
-          id
-        }
-      }
+      { where: { id } }
     );
 
     const updatedTransaction = await Transaction.findOne({
@@ -219,7 +241,12 @@ exports.updateTransaction = async (req, res) => {
         {
           model: User,
           as: "userOrder",
-          attributes: ["id", "fullName", "location", "email"]
+          attributes: ["id", "fullName", "location"]
+        },
+        {
+          model: User,
+          as: "restaurant",
+          attributes: ["id", "fullName", "location"]
         },
         {
           model: Order,
@@ -228,7 +255,7 @@ exports.updateTransaction = async (req, res) => {
         }
       ],
       attributes: {
-        exclude: ["createdAt", "updatedAt", "customerId", "restaurantId"]
+        exclude: ["updatedAt", "customerId", "restaurantId"]
       }
     });
     res.status(200).send({
@@ -239,6 +266,7 @@ exports.updateTransaction = async (req, res) => {
       }
     })
   } catch (error) {
+    console.log(error)
     res.status(500).send({
       status: "error",
       message: "internal server error"
@@ -302,6 +330,8 @@ exports.getCustomerTransactions = async (req, res) => {
       where: {
         customerId: id
       },
+      limit: 10,
+      order: [['createdAt', 'DESC']],
       include: [
         {
           model: Order,
@@ -311,7 +341,8 @@ exports.getCustomerTransactions = async (req, res) => {
         {
           model: User,
           as: "restaurant",
-          attributes: ["id", "fullName"]
+          attributes: ["id", "fullName"],
+          paranoid: false
         }
       ],
       attributes: {

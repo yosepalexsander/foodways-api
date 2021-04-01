@@ -16,7 +16,7 @@ exports.register = async (req, res) => {
   const schema = Joi.object({
     email: Joi.string().email().min(10).max(30).required(),
     password: Joi.string().min(8).max(50).required(),
-    fullName: Joi.string().min(8).max(40).required(),
+    fullName: Joi.string().min(3).max(40).required(),
     gender: Joi.string().min(4).max(6).required(),
     phone: Joi.string().regex(/^(0|\+62)/).min(10).max(13).required(),
     role: Joi.string().min(4).max(8).required(),
@@ -48,22 +48,28 @@ exports.register = async (req, res) => {
     });
     const accessToken = generateAccessToken({
       id: user.id,
-      name: user.fullName,
       role: user.role
     })
+
     res.status(200).send({
       status: "success",
       message: "resource has been registered",
       data: {
         user: {
           id: user.id,
-          image: `${process.env.DOMAIN}/uploads/${user.image}`,
+          email: user.email,
+          fullName: user.fullName,
+          gender: user.gender,
           role: user.role,
+          phone: user.phone,
+          location: user.location || null,
+          image: `${process.env.DOMAIN}/uploads/null`,
           token: accessToken
         }
       }
     })
   } catch (error) {
+    console.log(error)
     res.status(500).send({
       status: "error",
       message: "internal server error"
@@ -106,12 +112,12 @@ exports.login = async (req, res) => {
     if (!isValid) return res.status(400).send({
       status: "error",
       message: "your credentials is not valid"
-    })
+    });
 
     const accessToken = generateAccessToken({
       id: user.id,
       role: user.role
-    })
+    });
 
     res.status(200).send({
       status: "success",
@@ -119,8 +125,13 @@ exports.login = async (req, res) => {
       data: {
         user: {
           id: user.id,
-          image: `${process.env.DOMAIN}/uploads/${user.image}`,
+          email: user.email,
+          fullName: user.fullName,
+          gender: user.gender,
           role: user.role,
+          phone: user.phone,
+          location: user.location,
+          image: `${process.env.DOMAIN}/uploads/${user.image}`,
           token: accessToken
         }
       }
@@ -128,7 +139,7 @@ exports.login = async (req, res) => {
   } catch (error) {
     res.status(500).send({
       status: "error",
-      message: "server error"
+      message: "internal server error"
     });
   }
 };
@@ -145,6 +156,9 @@ exports.checkAuth = async (req, res) => {
       where: {
         id: req.user.id,
       },
+      attributes: {
+        exclude: ["createdAt", "updatedAt", "password"]
+      }
     });
 
     res.send({
@@ -153,8 +167,13 @@ exports.checkAuth = async (req, res) => {
       data: {
         user: {
           id: user.id,
-          image: `${process.env.DOMAIN}/uploads/${user.image}`,
+          email: user.email,
+          fullName: user.fullName,
+          gender: user.gender,
+          phone: user.phone,
           role: user.role,
+          location: user.location,
+          image: `${process.env.DOMAIN}/uploads/${user.image}`
         }
       },
     });

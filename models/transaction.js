@@ -31,7 +31,8 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   Transaction.init({
-    status: DataTypes.STRING
+    status: DataTypes.STRING,
+    deliveryLocation: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'Transaction',

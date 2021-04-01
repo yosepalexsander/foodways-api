@@ -92,11 +92,17 @@ exports.updateUser = async (req, res) => {
         id
       }
     });
-
     if (!user) {
       return res.status(404).send({
         status: "error",
         message: "user is not found"
+      })
+    };
+
+    if (user.id !== req.user.id) {
+      return res.status(401).send({
+        status: "error",
+        message: "your permission is not allowed"
       })
     };
 
@@ -160,13 +166,13 @@ exports.deleteUser = async (req, res) => {
       }
     });
 
-    if (image) {
-      //remove file from upload folder
-      fs.unlink(path.join(process.cwd(), `uploads/${image}`), (err) => {
-        if (err) throw err;
-        console.log('file deleted')
-      })
-    }
+    // if (image) {
+    //   //remove file from upload folder
+    //   fs.unlink(path.join(process.cwd(), `uploads/${image}`), (err) => {
+    //     if (err) throw err;
+    //     console.log('file deleted')
+    //   })
+    // }
 
     await User.destroy({
       where: {
@@ -182,6 +188,7 @@ exports.deleteUser = async (req, res) => {
       }
     });
   } catch (error) {
+    console.log(error)
     res.status(500).send({
       status: "error",
       message: "internal server error"
