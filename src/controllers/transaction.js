@@ -222,12 +222,21 @@ exports.updateTransaction = async (req, res) => {
       })
     };
 
-    if (transaction.restaurantId !== user.id) {
-      return res.status(403).send({
-        status: "error",
-        message: "you don't have permission for this resource"
-      })
-    };
+    if (user.role === "user") {
+      if (transaction.customerId !== user.id) {
+        return res.status(403).send({
+          status: "error",
+          message: "you don't have permission for this resource"
+        })
+      };
+    } else {
+      if (transaction.restaurantId !== user.id) {
+        return res.status(403).send({
+          status: "error",
+          message: "you don't have permission for this resource"
+        })
+      };
+    }
 
     const success = await Transaction.update(body,
       { where: { id } }

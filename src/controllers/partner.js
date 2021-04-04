@@ -12,6 +12,9 @@ const { User } = require("../../models");
 exports.getPopularPartner = async (req, res) => {
   try {
     let users = await User.findAll({
+      where: {
+        role: "partner"
+      },
       attributes: {
         include: [
           [

@@ -29,7 +29,7 @@ const {
   updateTransaction,
   getCustomerTransactions } = require("../controllers/transaction");
 
-const { getPopularPa, getPopularPartnerrtner } = require("../controllers/partner");
+const { getPopularPartner } = require("../controllers/partner");
 
 router.post('/register', register);
 router.post('/login', login);

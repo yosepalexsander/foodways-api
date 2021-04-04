@@ -147,7 +147,8 @@ exports.createProduct = async (req, res) => {
 
     let product = await Product.findOne({
       where: {
-        id
+        id,
+        userId
       },
       include: [{
         model: User,
@@ -194,7 +195,7 @@ exports.updateProduct = async (req, res) => {
   try {
     const product = await Product.findOne({
       where: {
-        id
+        id, userId
       },
       include: [{
         model: User,
@@ -232,17 +233,18 @@ exports.updateProduct = async (req, res) => {
         ...body,
         image: req.files.image[0].filename
       },
-        { where: { id } }
+        { where: { id, userId } }
       )
     } else {
       const success = await Product.update(body,
-        { where: { id } }
+        { where: { id, userId } }
       )
     }
 
     let updatedProduct = await Product.findOne({
       where: {
-        id
+        id,
+        userId
       },
       include: [{
         model: User,
@@ -281,7 +283,7 @@ exports.updateProduct = async (req, res) => {
  */
 exports.deleteProduct = async (req, res) => {
   const { id } = req.params;
-  const { user: { role } } = req;
+  const { user: { id: userId, role } } = req;
   if (role === "user") return res.status(403).send({
     status: "error",
     message: "access denied"
@@ -289,15 +291,18 @@ exports.deleteProduct = async (req, res) => {
   try {
     const { image } = await Product.findOne({
       where: {
-        id
+        id,
+        userId
       }
     });
 
     //remove file from upload folder
-    fs.unlink(path.join(process.cwd(), `uploads/${image}`), (err) => {
-      if (err) throw err;
-      console.log('file deleted')
-    })
+    if (image) {
+      fs.unlink(path.join(process.cwd(), `uploads/${image}`), (err) => {
+        if (err) throw err;
+        console.log('file deleted')
+      })
+    }
 
     await Product.destroy({
       where: {
