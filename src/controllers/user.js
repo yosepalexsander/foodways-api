@@ -22,9 +22,10 @@ exports.getUsers = async (req, res) => {
     users = users.map(user => {
       return {
         ...user,
-        image: cloudinary.url(user.image)
+        image: `https://res.cloudinary.com/devprojects/image/upload/${user.image}`
       }
-    })
+    });
+
     res.status(200).send({
       status: "success",
       message: "get users successfully",
@@ -64,7 +65,7 @@ exports.getUserDetail = async (req, res) => {
       data: {
         user: {
           ...user,
-          image: cloudinary.url(user.image)
+          image: `http://res.cloudinary.com/devprojects/image/upload/${user.image}`
         }
       }
     })
@@ -139,6 +140,7 @@ exports.updateUser = async (req, res) => {
       }
     });
   } catch (error) {
+    console.log(error)
     res.status(500).send({
       status: "error",
       message: "internal server error"
@@ -175,7 +177,6 @@ exports.deleteUser = async (req, res) => {
       }
     });
   } catch (error) {
-    console.log(error)
     res.status(500).send({
       status: "error",
       message: "internal server error"

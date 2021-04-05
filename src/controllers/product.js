@@ -23,11 +23,10 @@ exports.getProducts = async (req, res) => {
         exclude: ["createdAt", "updatedAt", "userId"]
       }
     })
-
     products = products.map(product => {
       return {
         ...product,
-        image: cloudinary.url(product.image)
+        image: `https://res.cloudinary.com/devprojects/image/upload/${product.image}`
       }
     });
 
@@ -68,7 +67,7 @@ exports.getProductsByUserId = async (req, res) => {
 
     products = products.map(product => ({
       ...product,
-      image: cloudinary.url(product.image)
+      image: `${product.image}`
     }))
     res.status(200).send({
       status: "success",
@@ -116,7 +115,7 @@ exports.getProductDetail = async (req, res) => {
       data: {
         product: {
           ...product,
-          image: cloudinary.url(product.image)
+          image: `https://res.cloudinary.com/devprojects/image/upload/${product.image}`
         }
       }
     })
@@ -271,7 +270,7 @@ exports.updateProduct = async (req, res) => {
       message: "resource has successfully updated",
       data: {
         ...updatedProduct,
-        image: cloudinary.url(updatedProduct.image)
+        image: `https://res.cloudinary.com/devprojects/image/upload/${updatedProduct.image}`
       }
     })
 
